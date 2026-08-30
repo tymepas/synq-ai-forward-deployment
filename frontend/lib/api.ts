@@ -1,9 +1,10 @@
 export type TicketListItem = { ticket_id: string; normalized_vehicle: string; created_at: string };
 export type Vehicle = { vehicle_reg: string; vehicle_id?: string | null; model?: string | null; year?: number | null; bs_stage?: string | null; engine_heater?: string | null; home_hub?: string | null; fleet_status?: string | null; resolution_status?: string | null };
 export type Approval = { message_id: string; ticket_id: string; approval_context: { decision_status?: string; reason_codes?: string[]; work_order_id?: string }; citations: string[] };
+export type EvidenceDetail = { label: string; kind: string; citation: string };
 export type QuarantineItem = { quarantine_id: string; ticket_id: string | null; reasons: string[]; summary: Record<string, unknown> };
-export type TicketResult = { status: string; reason?: string; ticket?: Record<string, unknown>; work_order_id?: string | null; pending_message_id?: string | null; decision?: { status?: string; reason_codes?: string[]; candidate_results?: Record<string, unknown> }; citations: string[] };
-export type VehicleResult = { status: string; reason?: string; vehicle?: Vehicle; conflicts?: { field_name: string; material: boolean; resolution_status: string }[]; citations: string[] };
+export type TicketResult = { status: string; reason?: string; ticket?: Record<string, unknown>; work_order_id?: string | null; pending_message_id?: string | null; decision?: { status?: string; reason_codes?: string[]; candidate_results?: Record<string, unknown> }; citations: string[]; citation_details?: EvidenceDetail[] };
+export type VehicleResult = { status: string; reason?: string; vehicle?: Vehicle; conflicts?: { field_name: string; material: boolean; resolution_status: string }[]; citations: string[]; citation_details?: EvidenceDetail[] };
 export type ExplanationResult = { status: "EXPLAINED" | "INSUFFICIENT_DATA"; explanation: string | null; reason: string | null; citations: string[]; evidence: TicketResult | VehicleResult };
 
 class ApiError extends Error {

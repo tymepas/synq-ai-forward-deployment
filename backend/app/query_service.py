@@ -7,6 +7,47 @@ from .normalization import normalize_ticket_id, normalize_vehicle_registration
 from .models import safe_ticket_context
 
 
+def _evidence_label(relative_path: str | None) -> tuple[str, str]:
+    """Map provenance sources to operator-facing labels without altering provenance."""
+    path = (relative_path or "").lower()
+    if path.endswith("tickets.json"):
+        return "Breakdown ticket", "breakdown_ticket"
+    if path.endswith("fleet_master.csv"):
+        return "Fleet record", "fleet_record"
+    if path.endswith("maintenance_log.xlsx"):
+        return "Maintenance history", "maintenance_history"
+    if path.endswith("dispatcher_interview.txt"):
+        return "Dispatcher policy", "dispatcher_policy"
+    if "emails/" in path:
+        return "Client rule", "client_rule"
+    if path.endswith("drivers_roster.csv"):
+        return "Driver roster", "driver_roster"
+    if path.endswith("meridian_trips.csv"):
+        return "Trip history", "trip_history"
+    return "Operational record", "operational_record"
+
+
+def _citation_details(store: ContextStore, citations: list[str]) -> list[dict[str, str]]:
+    """Resolve existing provenance IDs for display only; raw citations remain authoritative."""
+    source_paths = {
+        row["source_id"]: row["relative_path"]
+        for row in store.read_rows("SELECT source_id, relative_path FROM sources")
+    }
+    record_paths = {
+        row["source_record_id"]: row["relative_path"]
+        for row in store.read_rows(
+            """SELECT tr.source_record_id, s.relative_path
+               FROM ticket_records tr JOIN sources s ON s.source_id=tr.source_id"""
+        )
+    }
+    details: list[dict[str, str]] = []
+    for citation in citations:
+        source_id = citation.split(":record:", 1)[0]
+        label, kind = _evidence_label(record_paths.get(citation) or source_paths.get(source_id))
+        details.append({"label": label, "kind": kind, "citation": citation})
+    return details
+
+
 def query_ticket(store: ContextStore, ticket_id: str) -> dict[str, object]:
     canonical_id = normalize_ticket_id(ticket_id)
     rows = store.read_rows(
@@ -20,7 +61,7 @@ def query_ticket(store: ContextStore, ticket_id: str) -> dict[str, object]:
         (canonical_id,),
     )
     if not rows:
-        return {"status": "INSUFFICIENT_DATA", "reason": "ticket_not_found", "citations": []}
+        return {"status": "INSUFFICIENT_DATA", "reason": "ticket_not_found", "citations": [], "citation_details": []}
     row = rows[0]
     audits = store.read_rows(
         "SELECT outcome, details_json, citations_json FROM audit_events WHERE ticket_id=? ORDER BY step, event_id",
@@ -35,6 +76,7 @@ def query_ticket(store: ContextStore, ticket_id: str) -> dict[str, object]:
         "pending_message_id": row["message_id"],
         "decision": decision or {"status": "INSUFFICIENT_DATA", "reason": "not_processed"},
         "citations": citations,
+        "citation_details": _citation_details(store, citations),
     }
 
 
@@ -47,7 +89,7 @@ def query_vehicle(store: ContextStore, vehicle_reg: str) -> dict[str, object]:
         (canonical_reg,),
     )
     if not rows:
-        return {"status": "INSUFFICIENT_DATA", "reason": "vehicle_not_found", "citations": []}
+        return {"status": "INSUFFICIENT_DATA", "reason": "vehicle_not_found", "citations": [], "citation_details": []}
     vehicle = rows[0]
     conflicts = store.read_rows(
         """SELECT field_name, material, resolution_status, citations_json FROM entity_conflicts
@@ -61,4 +103,5 @@ def query_vehicle(store: ContextStore, vehicle_reg: str) -> dict[str, object]:
         "conflicts": [{"field_name": item["field_name"], "material": bool(item["material"]),
                        "resolution_status": item["resolution_status"]} for item in conflicts],
         "citations": citations,
+        "citation_details": _citation_details(store, citations),
     }

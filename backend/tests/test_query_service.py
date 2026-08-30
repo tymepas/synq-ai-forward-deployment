@@ -21,5 +21,7 @@ class QueryServiceTests(unittest.TestCase):
             missing = query_vehicle(store, "XX00XX0000")
             self.assertEqual(found["status"], "FOUND")
             self.assertTrue(found["citations"])
+            self.assertEqual(found["citation_details"], [{
+                "label": "Breakdown ticket", "kind": "breakdown_ticket", "citation": record_id,
+            }])
             self.assertEqual(missing["status"], "INSUFFICIENT_DATA")
-
