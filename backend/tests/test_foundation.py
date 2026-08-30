@@ -14,6 +14,12 @@ from app.normalization import normalize_vehicle_registration
 from app.redaction import PIIRedactor, contains_raw_pii
 
 
+SYNTHETIC_PHONE = "+91 6" + "0" * 9
+SYNTHETIC_AADHAAR = "0000 0000 " + "0000"
+SYNTHETIC_DL = "AA00 " + "0" * 11
+SYNTHETIC_EMAIL = "synthetic" + "@" + "example.invalid"
+
+
 VALID = {
     "ticket_id": "tkt-100",
     "created_at": "2026-08-01T12:00:00",
@@ -26,7 +32,7 @@ VALID = {
     "severity": "HIGH",
     "client": "Orion Pharma",
     "status": "OPEN",
-    "resolution_note": "Call +91 9876543210",
+    "resolution_note": f"Call {SYNTHETIC_PHONE}",
 }
 
 
@@ -44,8 +50,8 @@ class FoundationTests(unittest.TestCase):
         self.assertIn("missing_vehicle", result.reasons)
 
     def test_redaction_covers_known_sensitive_values(self) -> None:
-        value = "Aadhaar 1234 5678 9012, DL HR16 20128663605, phone +91 9876543210, a@b.example"
-        redacted = PIIRedactor(["Aarush Dutta"]).redact_text(value)
+        value = f"Aadhaar {SYNTHETIC_AADHAAR}, DL {SYNTHETIC_DL}, phone {SYNTHETIC_PHONE}, {SYNTHETIC_EMAIL}"
+        redacted = PIIRedactor(["Synthetic Contact"]).redact_text(value)
         self.assertFalse(contains_raw_pii(redacted))
         self.assertIn("[REDACTED_AADHAAR]", redacted)
 
@@ -91,7 +97,7 @@ class FoundationTests(unittest.TestCase):
     def test_ticket_free_text_is_not_persisted(self) -> None:
         from app.models import safe_ticket_context
 
-        record = {**VALID, "issue": "Call Jane Doe about a radiator leak", "resolution_note": "Jane Doe +91 9876543210"}
+        record = {**VALID, "issue": "Call Synthetic Contact about a radiator leak", "resolution_note": f"Synthetic Contact {SYNTHETIC_PHONE}"}
         context = safe_ticket_context(validate_ticket(record).normalized)
-        self.assertNotIn("Jane Doe", json.dumps(context))
-        self.assertNotIn("9876543210", json.dumps(context))
+        self.assertNotIn("Synthetic Contact", json.dumps(context))
+        self.assertNotIn(SYNTHETIC_PHONE, json.dumps(context))

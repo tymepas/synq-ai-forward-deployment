@@ -31,7 +31,7 @@ flowchart LR
 
 ```text
 .
-├── candidate_bundle/          # Challenge inputs; treated as immutable source material
+├── candidate_bundle/          # Local-only challenge inputs (gitignored; never committed)
 ├── backend/
 │   ├── app/                   # FastAPI, ingestion, rules, decisions, approvals, exports
 │   ├── tests/                 # Deterministic backend test suite
@@ -155,7 +155,7 @@ Create a Render **Web Service** from this repository with these settings:
 | Build command | `pip install .` |
 | Start command | `uvicorn app.api:app --host 0.0.0.0 --port $PORT` |
 
-The repository-level `candidate_bundle/` must remain present because the service reads it as immutable input. The default SQLite database and JSONL/audit artifacts are local filesystem state. For an environment that must retain data across redeploys, attach a Render persistent disk and configure the application storage path before production use; otherwise a redeploy starts with a fresh local context.
+This repository intentionally excludes `candidate_bundle/` and all original challenge data. For a permitted local run, place an authorized corpus alongside `backend/`; never commit it. For a deployed environment, provision only approved, PII-reviewed input data through a secured runtime data source before invoking `/run`. The default SQLite database and JSONL/audit artifacts are local filesystem state. For an environment that must retain data across redeploys, attach a Render persistent disk and configure the application storage path before production use; otherwise a redeploy starts with a fresh local context.
 
 Do not set `OPENAI_API_KEY` for the current backend: it is not needed until the future explanation-only assistant phase is implemented.
 

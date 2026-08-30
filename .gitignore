@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 .venv/
+candidate_bundle/
 backend/data/*.db
 backend/outputs/
 backend/audit/
