@@ -1,0 +1,33 @@
+[
+  {
+    "ticket_id": "TKT-0001",
+    "created_at": "2026-03-02T07:00:00",
+    "vehicle": "DL01AA1001",
+    "driver_id": "DRV-001",
+    "origin_hub": "Kanpur",
+    "km_from_origin_hub": 24,
+    "destination": "Ludhiana",
+    "issue": "brake failure warning",
+    "severity": "HIGH",
+    "client": "Apex Chemicals",
+    "status": "OPEN"
+  },
+  {
+    "ticket_id": "TKT-0028",
+    "created_at": "2026-03-03T10:30:00",
+    "vehicle": "DL01AA1002",
+    "driver_id": "DRV-002",
+    "origin_hub": "Lucknow",
+    "km_from_origin_hub": 18,
+    "destination": "Delhi",
+    "issue": "radiator leak",
+    "severity": "MEDIUM",
+    "client": "Orion Pharma",
+    "status": "OPEN"
+  },
+  {
+    "ticket_id": "TKT-DEMO-BAD",
+    "created_at": "not-a-timestamp",
+    "vehicle": "DL01AA1003"
+  }
+]

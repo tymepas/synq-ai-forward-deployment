@@ -1,34 +1,58 @@
-# Contributing
+# Contributing to Meridian Freight
 
-## Scope
-
-Keep changes deterministic, PII-safe, auditable, and small. Do not modify files in `candidate_bundle/`; they are challenge source material.
+Thanks for improving the project. Contributions should keep the system deterministic, PII-safe, auditable, and easy to review.
 
 ## Development setup
 
-Use Python 3.11 or newer and install the backend from `backend/`:
+Use Python 3.11+, Node.js 20+, and pnpm.
 
 ```powershell
+cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -e .[test]
+pip install -e .
+pip install httpx
+
+cd ..\frontend
+Copy-Item .env.example .env
+pnpm install
 ```
 
-## Before submitting a change
+See the root [README](README.md) for local startup, environment variables, and deployment guidance.
 
-1. Add or update deterministic tests for behavioral changes.
-2. Run `python -m unittest discover -s tests -v` from `backend/`.
-3. Confirm API payloads, logs, exports, and audits contain no raw PII.
-4. Preserve unique constraints, stable IDs, atomic exports, and quarantine behavior.
-5. Keep commits focused and describe the behavioral result.
+## Before opening a pull request
 
-## Engineering constraints
+1. Keep the change focused; do not mix unrelated refactors with behavior changes.
+2. Add or update deterministic tests when operational behavior changes.
+3. Run `python -m unittest discover -s tests -v` from `backend/`.
+4. Run `pnpm build` from `frontend/` when frontend code changes.
+5. Confirm APIs, logs, exports, audit records, and prompts contain no raw PII.
+6. Describe the behavior, evidence, security implications, and test results in the pull request.
 
-- Dispatch actions must be based on explicit, testable application rules—not model inference.
-- Unknown operational evidence must produce an explicit insufficient-data/manual-review outcome.
-- New input-file formats must be mapped explicitly; ambiguous mappings must quarantine rather than guess.
-- Any future AI capability may explain cited evidence only. It must receive minimized/redacted context and cannot approve, dispatch, or mutate operational state.
+## Non-negotiable engineering constraints
 
-## Pull requests
+- Dispatch actions must come from explicit, testable application rules—not model inference.
+- Unknown operational facts must produce an explicit insufficient-data/manual-review outcome.
+- New input formats must be mapped explicitly. Ambiguous mappings must quarantine instead of guessing.
+- Preserve stable IDs, database uniqueness constraints, atomic exports, and exactly-once work-order/message behavior.
+- AI may explain cited, PII-minimized evidence only. It must not approve, dispatch, select a vehicle, evaluate rules, or mutate operational state.
+- Approval identities must remain opaque `role-*` or `operator-*` handles.
 
-Describe the operational behavior changed, affected data contract, test evidence, and any security or PII implications. Avoid bundling unrelated refactors with behavior changes.
+## Data and privacy
+
+- Never commit `candidate_bundle/`, raw challenge datasets, emails, transcripts, databases, generated outputs, audit files, or populated `.env` files.
+- Use the committed `backend/demo_data/` only for safe, synthetic examples.
+- Do not add personal names, email addresses, phone numbers, identity values, license values, or raw free text to fixtures, logs, screenshots, or documentation.
+
+## Pull-request checklist
+
+- [ ] Scope is focused and documented.
+- [ ] Tests added or updated where behavior changed.
+- [ ] Backend tests pass.
+- [ ] Frontend production build passes when applicable.
+- [ ] PII and evidence-grounding implications reviewed.
+- [ ] No raw source corpus, secrets, generated data, or unrelated formatting changes included.
+
+## Code of conduct
+
+Be respectful, constructive, and mindful that operational software affects real people and safety-sensitive decisions.

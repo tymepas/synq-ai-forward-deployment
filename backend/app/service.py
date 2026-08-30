@@ -19,6 +19,22 @@ def get_store(settings: Settings) -> ContextStore:
     return store
 
 
+def seed_demo_if_empty(settings: Settings, store: ContextStore) -> bool:
+    """Seed only a brand-new operational store through the ordinary pipeline."""
+    operational_tables = (
+        "sources", "ticket_records", "tickets", "ticket_duplicates", "quarantine",
+        "file_quarantine", "audit_events", "work_orders", "pending_messages",
+        "sent_messages", "entity_conflicts", "documents", "vehicle_claims", "vehicles",
+        "drivers", "maintenance_events", "trips",
+    )
+    if store.read_rows(
+        " UNION ALL ".join(f"SELECT 1 AS present FROM {table}" for table in operational_tables) + " LIMIT 1"
+    ):
+        return False
+    run_pipeline(settings)
+    return True
+
+
 def _safe_input_path(settings: Settings, input_path: str) -> Path:
     resolved = Path(input_path).resolve()
     allowed_root = settings.root.parent.resolve()
@@ -52,4 +68,3 @@ def run_pipeline(settings: Settings, input_path: str | None = None) -> dict[str,
     }
     export_all(store, settings.outputs_dir, settings.audit_dir)
     return {"context": context, "ingestion": ingestion, "input": input_status, "processing": processing, "status": "PASS"}
-

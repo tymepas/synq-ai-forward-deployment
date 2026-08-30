@@ -12,7 +12,7 @@ from .approval import approve_message
 from .config import Settings, default_settings
 from .db import ContextStore
 from .query_service import query_ticket, query_vehicle
-from .service import get_store, run_pipeline
+from .service import get_store, run_pipeline, seed_demo_if_empty
 
 
 class RunRequest(BaseModel):
@@ -69,7 +69,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
-        get_store(settings)
+        store = get_store(settings)
+        seed_demo_if_empty(settings, store)
         yield
 
     app = FastAPI(

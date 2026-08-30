@@ -13,7 +13,12 @@ class Settings:
     @property
     def corpus_dir(self) -> Path:
         local_bundle = self.root / "candidate_bundle"
-        return local_bundle if local_bundle.exists() else self.root.parent / "candidate_bundle"
+        shared_bundle = self.root.parent / "candidate_bundle"
+        if local_bundle.exists():
+            return local_bundle
+        if shared_bundle.exists():
+            return shared_bundle
+        return self.root / "demo_data"
 
     @property
     def database_path(self) -> Path:

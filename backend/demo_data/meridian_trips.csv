@@ -1,0 +1,2 @@
+trip_id,created_at,route_type,origin_center,origin_name,dest_center,dest_name,dispatch_time,delivery_time,osrm_distance_km,osrm_time_min,actual_time_min,vehicle_reg,driver_id,client,status,billed_amount
+demo-trip-001,2025-12-01T08:00:00,Demo,DEMO-KNP,Kanpur Hub,DEMO-LDH,Ludhiana Hub,2025-12-01T08:00:00,2025-12-01T14:00:00,300,360,390,DL01AA1001,DRV-001,Apex Chemicals,COMPLETED,0

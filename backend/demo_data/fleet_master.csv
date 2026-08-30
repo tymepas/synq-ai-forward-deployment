@@ -1,0 +1,3 @@
+vehicle_id,registration_number,model,year,bs_stage,engine_heater,home_hub,capacity_tonnes,status
+DEMO-001,DL01AA1001,Meridian Hauler,2023,BS6,Yes,Kanpur,20,Active
+DEMO-002,DL01AA1002,Meridian Hauler,2024,BS6,Yes,Lucknow,20,Active
