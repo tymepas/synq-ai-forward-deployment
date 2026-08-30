@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
+from .ai_explanations import ExplanationUnavailable, explain
 from .approval import approve_message
 from .config import Settings, default_settings
 from .db import ContextStore
@@ -36,6 +37,10 @@ class QueryRequest(BaseModel):
         if self.ticket_id and self.vehicle_reg:
             raise ValueError("supply only one lookup key")
         return self
+
+
+class ExplainRequest(QueryRequest):
+    question: str = Field(min_length=1, max_length=1_000)
 
 
 def _decoded_quarantine(store: ContextStore) -> list[dict[str, Any]]:
@@ -103,6 +108,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # `question` is intentionally ignored in Phase 1. Phase 2 can explain these cited facts,
         # but will remain unable to execute decisions or actions.
         return query_ticket(store, request.ticket_id) if request.ticket_id else query_vehicle(store, request.vehicle_reg or "")
+
+    @app.post("/explain")
+    def explain_evidence(request: ExplainRequest, store: ContextStore = Depends(store_dependency)) -> dict[str, object]:
+        try:
+            result = explain(settings, store, request.question, request.ticket_id, request.vehicle_reg)
+        except ExplanationUnavailable as exc:
+            raise HTTPException(status_code=503, detail="grounded explanation is temporarily unavailable") from exc
+        return {
+            "status": result.status,
+            "explanation": result.explanation,
+            "reason": result.reason,
+            "citations": result.citations,
+            "evidence": result.evidence,
+        }
 
     @app.get("/ticket/{ticket_id}")
     def ticket(ticket_id: str, store: ContextStore = Depends(store_dependency)) -> dict[str, object]:

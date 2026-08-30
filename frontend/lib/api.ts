@@ -4,6 +4,7 @@ export type Approval = { message_id: string; ticket_id: string; approval_context
 export type QuarantineItem = { quarantine_id: string; ticket_id: string | null; reasons: string[]; summary: Record<string, unknown> };
 export type TicketResult = { status: string; reason?: string; ticket?: Record<string, unknown>; work_order_id?: string | null; pending_message_id?: string | null; decision?: { status?: string; reason_codes?: string[]; candidate_results?: Record<string, unknown> }; citations: string[] };
 export type VehicleResult = { status: string; reason?: string; vehicle?: Vehicle; conflicts?: { field_name: string; material: boolean; resolution_status: string }[]; citations: string[] };
+export type ExplanationResult = { status: "EXPLAINED" | "INSUFFICIENT_DATA"; explanation: string | null; reason: string | null; citations: string[]; evidence: TicketResult | VehicleResult };
 
 class ApiError extends Error {
   constructor(message: string, readonly status: number) { super(message); }
@@ -30,6 +31,9 @@ export const api = {
   vehicles: () => request<{ vehicles: Vehicle[]; count: number }>("/vehicles"),
   vehicle: (id: string) => request<VehicleResult>("/query", { method: "POST", body: JSON.stringify({ vehicle_reg: id }) }),
   queryTicket: (id: string) => request<TicketResult>("/query", { method: "POST", body: JSON.stringify({ ticket_id: id }) }),
+  explain: (question: string, ticketId?: string, vehicleReg?: string) => request<ExplanationResult>("/explain", {
+    method: "POST", body: JSON.stringify({ question, ...(ticketId ? { ticket_id: ticketId } : { vehicle_reg: vehicleReg }) }),
+  }),
   approvals: () => request<{ approvals: Approval[]; count: number }>("/approvals/pending"),
   approve: (ticketId: string, approvedBy: string) => request<{ ticket_id: string; message_id: string; created: boolean }>("/approve", { method: "POST", body: JSON.stringify({ ticket_id: ticketId, approved_by: approvedBy, approved_at: new Date().toISOString() }) }),
   quarantine: () => request<{ quarantine: QuarantineItem[]; count: number }>("/quarantine"),

@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -47,3 +48,9 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.post("/approve", json={
             "ticket_id": "TKT-1", "approved_by": "Jane Doe", "approved_at": "2026-08-01T00:00:00"
         }).status_code, 422)
+
+    def test_explain_configuration_failure_returns_503(self) -> None:
+        with patch("app.ai_explanations._load_api_key", return_value=None):
+            response = self.client.post("/explain", json={"ticket_id": "TKT-1", "question": "Explain this"})
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["detail"], "grounded explanation is temporarily unavailable")
