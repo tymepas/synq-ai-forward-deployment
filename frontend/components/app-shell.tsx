@@ -10,7 +10,7 @@ const navigation = [
   ["Approvals", "/approvals", "✓"],
   ["Vehicles", "/vehicles", "▱"],
   ["Quarantine", "/quarantine", "!"],
-  ["Ask AI", "/ask-ai", "✦"],
+  ["Operations Copilot", "/ask-ai", "✦"],
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {

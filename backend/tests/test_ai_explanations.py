@@ -88,6 +88,7 @@ class ExplanationTests(unittest.TestCase):
         self.assertEqual(fake.responses.kwargs["store"], False)
         self.assertNotIn("tools", fake.responses.kwargs)
         self.assertIn("do not make, change, recommend, or approve dispatch decisions", str(fake.responses.kwargs["instructions"]).lower())
+        self.assertIn("do not expose internal reason-code identifiers", str(fake.responses.kwargs["instructions"]).lower())
         self.assertEqual(before, self.store.read_rows("SELECT COUNT(*) AS count FROM work_orders, pending_messages, sent_messages"))
 
     def test_model_output_is_redacted_before_returning(self) -> None:

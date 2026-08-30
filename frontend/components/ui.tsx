@@ -12,9 +12,10 @@ export function EmptyPanel({ title, detail }: { title: string; detail: string })
 
 export function StatusPill({ value }: { value: string | null | undefined }) {
   const normal = value?.toUpperCase() ?? "UNKNOWN";
-  const tone = normal.includes("PASS") || normal.includes("FOUND") || normal.includes("RESOLVED") || normal.includes("SENT")
-    ? "positive" : normal.includes("HOLD") || normal.includes("PENDING") || normal.includes("INSUFFICIENT") ? "warning" : "neutral";
-  return <span className={`pill ${tone}`}>{value?.replaceAll("_", " ") ?? "UNKNOWN"}</span>;
+  const tone = normal.includes("PASS") || normal.includes("FOUND") || normal.includes("RESOLVED") || normal.includes("SENT") || normal.includes("ASSIGNED") || normal.includes("SELECTED") || normal.includes("HEALTHY")
+    ? "positive" : normal.includes("HOLD") || normal.includes("PENDING") || normal.includes("QUARANTINED") ? "warning" : normal.includes("INSUFFICIENT") || normal.includes("UNAVAILABLE") ? "danger" : "neutral";
+  const label = normal === "MANUAL_HOLD" ? "Manual hold" : normal === "INSUFFICIENT_DATA" ? "Insufficient data" : value?.replaceAll("_", " ") ?? "UNKNOWN";
+  return <span className={`pill ${tone}`}>{label}</span>;
 }
 
 export function MetricCard({ label, value, detail, tone = "blue" }: { label: string; value: number | string; detail: string; tone?: "blue" | "orange" | "purple" | "green" }) {

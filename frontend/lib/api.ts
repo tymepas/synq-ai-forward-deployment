@@ -1,5 +1,5 @@
 export type TicketListItem = { ticket_id: string; normalized_vehicle: string; created_at: string };
-export type Vehicle = { vehicle_reg: string; vehicle_id?: string | null; model?: string | null; year?: number | null; bs_stage?: string | null; engine_heater?: string | null; home_hub?: string | null; fleet_status?: string | null; resolution_status?: string | null };
+export type Vehicle = { vehicle_reg: string; vehicle_id?: string | null; model?: string | null; year?: number | null; bs_stage?: string | null; engine_heater?: string | null; home_hub?: string | null; capacity_tonnes?: number | null; fleet_status?: string | null; resolution_status?: string | null };
 export type Approval = { message_id: string; ticket_id: string; approval_context: { decision_status?: string; reason_codes?: string[]; work_order_id?: string }; citations: string[] };
 export type EvidenceDetail = { label: string; kind: string; citation: string };
 export type QuarantineItem = { quarantine_id: string; ticket_id: string | null; reasons: string[]; summary: Record<string, unknown> };

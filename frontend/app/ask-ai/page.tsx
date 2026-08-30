@@ -1,19 +1,16 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { api, EvidenceDetail, ExplanationResult } from "@/lib/api";
+import { EvidenceReviewed, humanize } from "@/components/evidence";
+import { api, ExplanationResult } from "@/lib/api";
 import { ErrorPanel, PageHeading, StatusPill } from "@/components/ui";
 
 const sectionNames = ["Decision", "Why automation stopped", "What we know", "What to do next"] as const;
 
 type ExplanationSection = { title: string; content: string };
 
-function formatLabel(value: string) {
-  return value.replaceAll("_", " ");
-}
-
 function splitExplanation(text: string | null): ExplanationSection[] {
-  if (!text) return [];
+  if (!text) return sectionNames.map((title) => ({ title, content: "INSUFFICIENT_DATA" }));
   const sections: ExplanationSection[] = [];
   let current: ExplanationSection | null = null;
   for (const line of text.split("\n")) {
@@ -25,25 +22,10 @@ function splitExplanation(text: string | null): ExplanationSection[] {
       current.content = `${current.content}${current.content ? " " : ""}${line.trim()}`;
     }
   }
-  return sections.length ? sections : [{ title: "Explanation", content: text }];
-}
-
-function EvidencePanel({ details, citations }: { details: EvidenceDetail[]; citations: string[] }) {
-  const labels = [...new Set(details.map((detail) => detail.label))];
-  return <section className="copilot-evidence" aria-label="Evidence reviewed">
-    <div><p className="eyebrow">EVIDENCE REVIEWED</p><h3>Grounded backend records</h3></div>
-    <div className="evidence-chip-grid">
-      {labels.length ? labels.map((label) => <span className="evidence-chip" key={label}>{label}</span>) : <span className="muted">No evidence labels available</span>}
-    </div>
-    <details className="raw-evidence">
-      <summary>View evidence details</summary>
-      <ul>
-        {(details.length ? details : citations.map((citation) => ({ label: "Operational record", kind: "operational_record", citation }))).map((detail) => <li key={detail.citation}>
-          <span>{detail.label}</span><code>{detail.citation}</code>
-        </li>)}
-      </ul>
-    </details>
-  </section>;
+  if (!sections.length) {
+    return sectionNames.map((title, index) => ({ title, content: index === 0 ? text : "INSUFFICIENT_DATA" }));
+  }
+  return sectionNames.map((title) => sections.find((section) => section.title === title) ?? { title, content: "INSUFFICIENT_DATA" });
 }
 
 export default function AskAiPage() {
@@ -70,6 +52,8 @@ export default function AskAiPage() {
   const decision = evidence && "decision" in evidence ? evidence.decision : undefined;
   const sections = useMemo(() => splitExplanation(result?.explanation ?? null), [result?.explanation]);
   const citationDetails = evidence?.citation_details ?? [];
+  const operationalImpact = decision?.status === "MANUAL_HOLD" ? "Automatic dispatch was withheld until required operational evidence can be verified."
+    : evidence && "pending_message_id" in evidence && evidence.pending_message_id ? "The recorded communication step remains behind the human approval gate." : null;
 
   return <>
     <PageHeading eyebrow="OPERATIONS INTELLIGENCE" title="Operations Copilot"><span className="pill positive">AI EXPLANATION ONLY</span></PageHeading>
@@ -84,10 +68,11 @@ export default function AskAiPage() {
     {error && <ErrorPanel message={error} />}
     {result && <section className="card answer-card copilot-result">
       <div className="card-heading"><div><p className="eyebrow">OPERATIONS EXPLANATION</p><h2>{summary && "ticket_id" in summary ? String(summary.ticket_id) : summary && "vehicle_reg" in summary ? String(summary.vehicle_reg) : "Operational evidence"}</h2></div><StatusPill value={result.status} /></div>
-      {decision && <div className="decision-strip"><div><span>Recorded deterministic decision</span><strong>{decision.status ?? "INSUFFICIENT_DATA"}</strong></div><div className="reason-list">{decision.reason_codes?.map((reason) => <span key={reason}>{formatLabel(reason)}</span>)}</div></div>}
-      {result.status === "INSUFFICIENT_DATA" ? <p className="insufficient">INSUFFICIENT_DATA: {result.reason?.replaceAll("_", " ") ?? "The backend has no grounded evidence for this request."}</p> : <div className="copilot-sections">{sections.map((section) => <section className={`copilot-section ${section.title === "What to do next" ? "next-action" : ""}`} key={section.title}><h3>{section.title}</h3><p>{section.content || "INSUFFICIENT_DATA"}</p></section>)}</div>}
-      {summary && <section className="copilot-facts"><p className="eyebrow">RECORDED FACTS</p><div className="detail-grid">{Object.entries(summary).map(([key, item]) => <div key={key}><span>{formatLabel(key)}</span><strong>{String(item ?? "—")}</strong></div>)}</div></section>}
-      <EvidencePanel details={citationDetails} citations={result.citations} />
+      {decision && <div className="decision-strip"><div><span>Recorded deterministic decision</span><strong>{humanize(decision.status ?? "INSUFFICIENT_DATA")}</strong></div></div>}
+      {result.status === "INSUFFICIENT_DATA" ? <section className="insufficient copilot-insufficient"><h3>Insufficient data</h3><p>{result.reason === "ticket_not_found" ? "Ticket not found. No operational decision was generated." : "The required operational evidence is unavailable. No decision was generated."}</p></section> : <div className="copilot-sections">{sections.map((section) => <section className={`copilot-section ${section.title === "What to do next" ? "next-action" : ""}`} key={section.title}><h3>{section.title}</h3><p>{section.content || "INSUFFICIENT_DATA"}</p></section>)}</div>}
+      {operationalImpact && <section className="operational-impact"><p className="eyebrow">OPERATIONAL IMPACT</p><p>{operationalImpact}</p></section>}
+      {summary && <section className="copilot-facts"><p className="eyebrow">RECORDED FACTS</p><div className="detail-grid">{Object.entries(summary).map(([key, item]) => <div key={key}><span>{humanize(key)}</span><strong>{String(item ?? "—")}</strong></div>)}</div></section>}
+      <EvidenceReviewed details={citationDetails} citations={result.citations} />
     </section>}
   </>;
 }

@@ -35,26 +35,26 @@ export default function DashboardPage() {
     {!data && !error && <LoadingPanel label="Loading operations overview…" />}
     {data && <>
       <section className="metrics-grid" aria-label="Operational metrics">
-        <MetricCard label="Canonical tickets" value={data.tickets} detail="Validated tickets in context" />
-        <MetricCard label="Pending approvals" value={data.approvals} detail="Human decision required" tone="orange" />
-        <MetricCard label="Fleet records" value={data.vehicles} detail="PII-safe vehicle projections" tone="purple" />
-        <MetricCard label="Quarantined" value={data.quarantine} detail="Records preserved for review" tone="green" />
+        <MetricCard label="Canonical tickets" value={data.tickets} detail="Validated, deduplicated operational tickets" />
+        <MetricCard label="Pending approvals" value={data.approvals} detail="Actions awaiting human review" tone="orange" />
+        <MetricCard label="Fleet records" value={data.vehicles} detail="Canonicalized fleet entities" tone="purple" />
+        <MetricCard label="Quarantined" value={data.quarantine} detail="Records intentionally isolated from automation" tone="green" />
       </section>
       <section className="split-grid top-gap">
         <article className="card health-card">
-          <div className="card-heading"><div><p className="eyebrow">SERVICE STATUS</p><h2>Backend connection</h2></div><StatusPill value={data.healthy ? "CONNECTED" : "UNAVAILABLE"} /></div>
+          <div className="card-heading"><div><p className="eyebrow">SERVICE STATUS</p><h2>Backend connection</h2></div><StatusPill value={data.healthy ? "HEALTHY" : "UNAVAILABLE"} /></div>
           <div className="health-row"><span className={data.databaseReady ? "status-dot online" : "status-dot"} /><span>SQLite context</span><strong>{data.databaseReady ? "Ready" : "Initializing"}</strong></div>
           <p className="muted">Every action is backed by the FastAPI service. The interface never evaluates dispatch rules locally.</p>
         </article>
         <article className="card">
           <div className="card-heading"><div><p className="eyebrow">OPERATOR QUEUE</p><h2>Review next</h2></div></div>
-          <p className="queue-number">{data.approvals}</p><p className="muted">approval-gated messages awaiting an authorized dispatcher.</p>
+          <p className="queue-number">{data.approvals}</p><p className="muted">Actions awaiting authorized human review before the local outbox step.</p>
           <Link className="text-link" href="/approvals">Open approval queue →</Link>
         </article>
       </section>
       <section className="card top-gap safety-card">
-        <div><p className="eyebrow">SAFETY MODEL</p><h2>Deterministic by design</h2><p className="muted">Missing operational evidence remains a manual hold. PII and source free text are excluded from this workspace.</p></div>
-        <div className="safety-items"><span>Exactly once</span><span>Audit cited</span><span>PII minimized</span></div>
+        <div><p className="eyebrow">SAFETY MODEL</p><h2>Deterministic by design</h2><p className="muted">Human approval protects irreversible actions. PII is minimized, and missing operational evidence remains a safe manual hold.</p></div>
+        <div className="safety-items"><span>Human approval</span><span>Exactly once</span><span>PII minimized</span></div>
       </section>
     </>}
   </>;
