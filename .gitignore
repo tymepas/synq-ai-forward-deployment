@@ -5,6 +5,10 @@ candidate_bundle/
 backend/data/*.db
 backend/outputs/
 backend/audit/
+frontend/node_modules/
+frontend/.next/
+frontend/.env
+frontend/.env.*
 .pytest_cache/
 .env
 .env.*

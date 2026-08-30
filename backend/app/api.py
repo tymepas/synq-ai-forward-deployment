@@ -128,6 +128,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         rows = _decoded_quarantine(store)
         return {"status": "FOUND", "quarantine": rows, "count": len(rows)}
 
+    @app.get("/approvals/pending")
+    def pending_approvals(store: ContextStore = Depends(store_dependency)) -> dict[str, object]:
+        rows = store.read_rows(
+            """SELECT pm.message_id, pm.ticket_id, pm.approval_context_json, pm.citations_json
+               FROM pending_messages pm
+               LEFT JOIN sent_messages sm ON sm.ticket_id = pm.ticket_id
+               WHERE sm.ticket_id IS NULL
+               ORDER BY pm.ticket_id"""
+        )
+        approvals = [
+            {
+                "message_id": row["message_id"],
+                "ticket_id": row["ticket_id"],
+                "approval_context": json.loads(row["approval_context_json"]),
+                "citations": json.loads(row["citations_json"]),
+            }
+            for row in rows
+        ]
+        return {"status": "FOUND", "approvals": approvals, "count": len(approvals)}
+
     return app
 
 
