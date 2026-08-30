@@ -7,3 +7,4 @@ backend/audit/
 .pytest_cache/
 .env
 .env.*
+!.env.example
