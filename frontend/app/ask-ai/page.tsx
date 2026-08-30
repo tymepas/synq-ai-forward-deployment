@@ -28,6 +28,12 @@ function splitExplanation(text: string | null): ExplanationSection[] {
   return sectionNames.map((title) => sections.find((section) => section.title === title) ?? { title, content: "INSUFFICIENT_DATA" });
 }
 
+function nextActionText(content: string, isManualHold: boolean) {
+  if (!isManualHold) return content;
+  const humanText = content.replace(/\bINSUFFICIENT_DATA(?:\s*[—–:-]\s*)?/gi, "").replace(/\s{2,}/g, " ").trim();
+  return humanText || "Provide or reconcile the required operational evidence, then rerun the dispatch evaluation.";
+}
+
 export default function AskAiPage() {
   const [kind, setKind] = useState<"ticket" | "vehicle">("ticket");
   const [lookup, setLookup] = useState("");
@@ -69,7 +75,7 @@ export default function AskAiPage() {
     {result && <section className="card answer-card copilot-result">
       <div className="card-heading"><div><p className="eyebrow">OPERATIONS EXPLANATION</p><h2>{summary && "ticket_id" in summary ? String(summary.ticket_id) : summary && "vehicle_reg" in summary ? String(summary.vehicle_reg) : "Operational evidence"}</h2></div><StatusPill value={result.status} /></div>
       {decision && <div className="decision-strip"><div><span>Recorded deterministic decision</span><strong>{humanize(decision.status ?? "INSUFFICIENT_DATA")}</strong></div></div>}
-      {result.status === "INSUFFICIENT_DATA" ? <section className="insufficient copilot-insufficient"><h3>Insufficient data</h3><p>{result.reason === "ticket_not_found" ? "Ticket not found. No operational decision was generated." : "The required operational evidence is unavailable. No decision was generated."}</p></section> : <div className="copilot-sections">{sections.map((section) => <section className={`copilot-section ${section.title === "What to do next" ? "next-action" : ""}`} key={section.title}><h3>{section.title}</h3><p>{section.content || "INSUFFICIENT_DATA"}</p></section>)}</div>}
+      {result.status === "INSUFFICIENT_DATA" ? <section className="insufficient copilot-insufficient"><h3>Insufficient data</h3><p>{result.reason === "ticket_not_found" ? "Ticket not found. No operational decision was generated." : "The required operational evidence is unavailable. No decision was generated."}</p></section> : <div className="copilot-sections">{sections.map((section) => <section className={`copilot-section ${section.title === "What to do next" ? "next-action" : ""}`} key={section.title}><h3>{section.title}</h3><p>{section.title === "What to do next" ? nextActionText(section.content, decision?.status === "MANUAL_HOLD") : section.content || "INSUFFICIENT_DATA"}</p></section>)}</div>}
       {operationalImpact && <section className="operational-impact"><p className="eyebrow">OPERATIONAL IMPACT</p><p>{operationalImpact}</p></section>}
       {summary && <section className="copilot-facts"><p className="eyebrow">RECORDED FACTS</p><div className="detail-grid">{Object.entries(summary).map(([key, item]) => <div key={key}><span>{humanize(key)}</span><strong>{String(item ?? "—")}</strong></div>)}</div></section>}
       <EvidenceReviewed details={citationDetails} citations={result.citations} />
